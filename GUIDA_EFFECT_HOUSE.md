@@ -153,12 +153,12 @@ l'iPhone: l'effetto si apre su TikTok, solo per te. Controlla tre cose:
 5. Invia. Arriva una notifica quando è approvato (di solito entro 1 giorno).
 
 ### 3.7 La canzone
-L'audio dentro un effetto conta come musica, e la musica protetta da copyright
-viene rifiutata. **Non mettere la canzone dentro l'effetto.**
-Fai così:
-- pubblica **tu per primo** 3–4 video con l'effetto **e** il suono "ALBE.x I BAFFI";
-- nella descrizione dell'effetto e nei video scrivi "usa il suono I BAFFI";
-- chi trova l'effetto dal tuo video vede sia l'effetto sia il suono e li usa insieme.
+Non importare un file mp3, perché la musica caricata da fuori viene rifiutata per il copyright.
+Usa invece il pannello **Timeline → TikTok Sounds** e cerca "ALBE.x I BAFFI": è la libreria
+ufficiale di TikTok, quindi il suono è già autorizzato e parte insieme all'effetto.
+In più:
+- pubblica **tu per primo** 3–4 video con l'effetto;
+- nella descrizione dell'effetto scrivi "suono: ALBE.x – I BAFFI".
 
 ---
 
