@@ -211,16 +211,34 @@ $("btnRec").addEventListener("click", () => {
   pezzi = [];
   recorder.ondataavailable = (e) => e.data.size && pezzi.push(e.data);
   recorder.onstop = () => {
-    const blob = new Blob(pezzi, { type: recorder.mimeType });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `che_baffo_sei.${recorder.mimeType.includes("mp4") ? "mp4" : "webm"}`;
-    a.click();
+    const tipo = recorder.mimeType.split(";")[0];
+    const ext = tipo.includes("mp4") ? "mp4" : "webm";
+    ultimoVideo = new File(pezzi, `che_baffo_sei.${ext}`, { type: tipo });
+    $("btnCondividi").classList.remove("nascosto");
+    stato("Video pronto! Tocca \"Condividi\" per mandarlo su TikTok o salvarlo.");
     recorder = null;
     $("btnRec").textContent = "● Registra"; $("btnRec").classList.remove("rec");
   };
   recorder.start();
   $("btnRec").textContent = "■ Stop"; $("btnRec").classList.add("rec");
+});
+
+// condividi (iPhone: foglio di condivisione -> TikTok / Salva video), altrimenti scarica
+let ultimoVideo = null;
+$("btnCondividi").addEventListener("click", async () => {
+  if (!ultimoVideo) return;
+  if (navigator.canShare && navigator.canShare({ files: [ultimoVideo] })) {
+    try {
+      await navigator.share({ files: [ultimoVideo], text: "Che baffo sei? 🥸 Suono: ALBE.x – I BAFFI" });
+      return;
+    } catch (e) {
+      if (e.name === "AbortError") return;
+    }
+  }
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(ultimoVideo);
+  a.download = ultimoVideo.name;
+  a.click();
 });
 
 function tocco() {
@@ -247,7 +265,9 @@ $("btnAvvia").addEventListener("click", async () => {
     nuovaRoulette();
     $("avvio").classList.add("nascosto");
     $("comandi").classList.remove("nascosto");
-    $("opzioni").classList.remove("nascosto");
+    // le opzioni di prova si vedono solo aprendo la pagina con ?prova
+    if (new URLSearchParams(location.search).has("prova")) $("opzioni").classList.remove("nascosto");
+    else $("optBordo").checked = true;
     requestAnimationFrame(ciclo);
     stato("Carico il riconoscimento del viso…");
     await caricaTracker();
