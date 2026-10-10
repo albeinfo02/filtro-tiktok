@@ -32,7 +32,20 @@ function carica(src) {
 }
 
 const immagini = {};
+// ?realistico = baffi "veri" disegnati pelo per pelo, che crescono mentre gira la roulette
+const parametri = new URLSearchParams(location.search);
+const REALISTICO = parametri.has("realistico");
+const CAPELLI = parametri.get("capelli") === "castano" ? "castano" : "scuro";
+const FASI_CRESCITA = [0, 1, 2, 3];
 async function caricaImmagini() {
+  if (REALISTICO) {
+    BAFFI = (await (await fetch("../asset/realistici/realistici.json")).json()).map((b) => b.id);
+    const dir = `../asset/realistici/${CAPELLI}`;
+    immagini.crescita = await Promise.all(BAFFI.map((b) =>
+      Promise.all(FASI_CRESCITA.map((f) => carica(`${dir}/${b}_crescita_${f}.png`)))));
+    immagini.nomi_bordo_bianco = await Promise.all(BAFFI.map((b) => carica(`../asset/nomi_bordo_bianco/${b}.png`)));
+    return;
+  }
   BAFFI = (await (await fetch("../baffi.json")).json()).map((b) => b.id);
   const gruppi = ["baffi_nero", "baffi_bordo_bianco", "nomi_bordo_bianco"];
   await Promise.all(gruppi.map(async (g) => {
@@ -93,12 +106,14 @@ function aggiornaPosa(lm) {
   for (const c of Object.keys(nuova)) posa[c] += (nuova[c] - posa[c]) * k;
 }
 
-function disegnaBaffo(img) {
+function disegnaBaffo(img, realistico = false) {
   const s = (posa.bocca * BAFFO_SU_BOCCA) / LARGHEZZA_BASE;
   ctx.save();
   ctx.translate(posa.x, posa.y);
   ctx.rotate(posa.ang);
   ctx.scale(s, s);
+  // "multiply": i peli scuriscono la pelle sotto invece di coprirla, come un baffo vero
+  if (realistico) ctx.globalCompositeOperation = "multiply";
   ctx.drawImage(img, -ANCORA.x, -ANCORA.y, TELA, TELA);
   ctx.restore();
 }
@@ -137,6 +152,7 @@ function disegnaPunti(lm) {
   }
 }
 
+let inizioCrescita = 0;
 let ultimoTs = -1, ultimiPunti = null, perso = 0;
 function ciclo() {
   requestAnimationFrame(ciclo);
@@ -158,7 +174,16 @@ function ciclo() {
   const st = roulette.aggiorna(ora);
   const bordo = $("optBordo").checked;
   if (posa) {
-    if (st.fase !== "pronto") disegnaBaffo(immagini[bordo ? "baffi_bordo_bianco" : "baffi_nero"][st.indice]);
+    if (st.fase !== "pronto" && REALISTICO) {
+      // cresce mentre gira: dalla prima fase (accenno) al baffo completo quando si ferma
+      if (st.fase === "gira" && faseAudio !== "gira") inizioCrescita = ora;
+      const durata = Number($("optDurata").value) * 1000 + 3800;
+      const f = st.fase === "fermo" ? FASI_CRESCITA.length - 1
+        : Math.min(FASI_CRESCITA.length - 1, Math.floor(((ora - inizioCrescita) / durata) * FASI_CRESCITA.length));
+      disegnaBaffo(immagini.crescita[st.indice][f], true);
+    } else if (st.fase !== "pronto") {
+      disegnaBaffo(immagini[bordo ? "baffi_bordo_bianco" : "baffi_nero"][st.indice]);
+    }
     if ($("optDebug").checked && ultimiPunti) disegnaPunti(ultimiPunti);
   } else {
     scritta("Inquadra la faccia", H * 0.12, 54);
