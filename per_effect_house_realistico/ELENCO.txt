@@ -1,0 +1,20 @@
+Stesso numero = stesso baffo in baffi/, ombra/ e nomi/
+baffi/ = baffo completo, ombra/ = primo accenno (per l'effetto crescita)
+
+00  A MANUBRIO
+01  ALLA DALÌ
+02  A TRICHECO
+03  A FERRO DI CAVALLO
+04  A SPAZZOLINO
+05  A MATITA
+06  CHEVRON
+07  IMPERIALE
+08  ALL'INGLESE
+09  A PENNELLO
+10  A LAMPADA
+11  BAFFO E PIZZETTO
+12  PELURIA
+13  DA MOSCHETTIERE
+14  DA CARABINIERE
+15  DA PIZZAIOLO
+16  DA ZIO AL MATRIMONIO
