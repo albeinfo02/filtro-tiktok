@@ -68,7 +68,7 @@ def campo_direzioni(m):
 
 
 def profondita(m):
-    """0.5 sul bordo alto della sagoma (sotto il naso) fino a 1 sul bordo basso (sul labbro), colonna per colonna."""
+    """0.7 sul bordo alto della sagoma (sotto il naso) fino a 1 sul bordo basso (sul labbro), colonna per colonna."""
     h, w = m.shape
     yy = np.arange(h)[:, None].astype(np.float32)
     ha = m.any(axis=0)
@@ -76,7 +76,7 @@ def profondita(m):
     bot = np.where(ha, h - 1 - m[::-1].argmax(axis=0), 1).astype(np.float32)
     spess = np.maximum(bot - top, 1)
     t = np.clip((yy - top) / spess, 0, 1)
-    f = 0.5 + 0.5 * (t * t * (3 - 2 * t))
+    f = 0.7 + 0.3 * (t * t * (3 - 2 * t))
     # sfuma anche fuori dalla sagoma (punte dei peli)
     f = np.where(yy > bot, 1.0, f)
     return np.array(Image.fromarray((f * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(SS * 3)),
@@ -113,7 +113,7 @@ def disegna(id_, colore, fase, seed):
             pts.append((x, y))
         t = rng.random() ** 3   # quasi tutti scuri, qualche pelo più chiaro
         c = tuple(int(v) for v in scuro * (1 - t) + chiaro * t)
-        a = int(rng.uniform(140, 225))
+        a = int(rng.uniform(170, 245))
         w = int(SS * rng.uniform(0.35, 0.6)) or 1
         # radice più spessa, punta più sottile
         da.line(pts[:3], fill=a, width=w + 1)
@@ -122,12 +122,12 @@ def disegna(id_, colore, fase, seed):
 
     # velo sotto i peli: densità alla radice, la pelle si intravede
     velo = Image.fromarray((m * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(SS * 4))
-    velo = velo.point(lambda v: int(v * (0.55 + 0.35 * fase) * (0.5 if peluria else 1)))
+    velo = velo.point(lambda v: int(v * (0.7 + 0.3 * fase) * (0.5 if peluria else 1)))
     alfa = Image.fromarray(np.maximum(np.array(alfa), np.array(velo)))
 
     a = np.array(alfa, dtype=np.float32) / 255
     # più pieno nei toni medi (i peli sottili ridotti a 512 diventerebbero troppo trasparenti)
-    alfa = Image.fromarray((255 * (a ** 0.7) * profondita(m)).astype(np.uint8))
+    alfa = Image.fromarray((255 * (a ** 0.5) * profondita(m)).astype(np.uint8))
     im = col.convert("RGBA")
     im.putalpha(alfa)
     return im.resize((LATO, LATO), Image.LANCZOS)
