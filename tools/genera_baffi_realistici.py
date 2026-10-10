@@ -42,6 +42,10 @@ FASI = [0.25, 0.5, 0.75, 1.0]   # lunghezza dei peli in ogni fase di crescita
 def sagoma(id_):
     """Maschera della sagoma a G x G, ammorbidita (via le sbavature da pennello)."""
     a = Image.open(SRC / f"{id_}.png").getchannel("A").resize((G, G), Image.BILINEAR)
+    if id_ == "14_peluria":
+        # il disegno è fatto a puntini: per la versione vera serve una zona unica (barba di 3 giorni)
+        a = a.filter(ImageFilter.GaussianBlur(SS * 18)).point(lambda v: 255 if v > 18 else 0)
+        return np.array(a) > 0
     a = a.filter(ImageFilter.GaussianBlur(SS * 3)).point(lambda v: 255 if v > 110 else 0)
     return np.array(a) > 0
 
@@ -92,8 +96,8 @@ def disegna(id_, colore, fase, seed):
         raise SystemExit(f"{id_}: sagoma vuota")
     area = len(xs)
     peluria = id_ == "14_peluria"
-    n_peli = int(area / (SS * SS) * (0.42 if not peluria else 0.9) * (0.45 + 0.55 * fase))
-    lungo = SS * (9 + 15 * fase) * (0.5 if peluria else 1.0)
+    n_peli = int(area / (SS * SS) * (0.42 if not peluria else 0.30) * (0.45 + 0.55 * fase))
+    lungo = SS * (9 + 15 * fase) * (0.3 if peluria else 1.0)
 
     alfa = Image.new("L", (G, G), 0)
     col = Image.new("RGB", (G, G), tuple(int(v * 0.8) for v in colore[0]))
@@ -122,7 +126,7 @@ def disegna(id_, colore, fase, seed):
 
     # velo sotto i peli: densità alla radice, la pelle si intravede
     velo = Image.fromarray((m * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(SS * 4))
-    velo = velo.point(lambda v: int(v * (0.7 + 0.3 * fase) * (0.5 if peluria else 1)))
+    velo = velo.point(lambda v: int(v * (0.7 + 0.3 * fase) * (0.25 if peluria else 1)))
     alfa = Image.fromarray(np.maximum(np.array(alfa), np.array(velo)))
 
     a = np.array(alfa, dtype=np.float32) / 255
