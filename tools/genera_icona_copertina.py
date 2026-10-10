@@ -5,6 +5,7 @@ Legge originali/copertina/copertina_i_baffi.png, isola il personaggio centrale
 (solo l'inchiostro suo, senza i pezzi delle facce vicine) e scrive in asset/icona/:
   copertina_giallo_162.png / _1024   personaggio su sfondo giallo, viso color carta
   copertina_carta_162.png  / _1024   personaggio su sfondo carta, come la copertina
+  copertina_bianco_162.png / _1024   personaggio su sfondo bianco puro
   copertina_domanda_162.png / _1024  come il giallo, con un "?" a pennello
 """
 
@@ -87,7 +88,7 @@ def personaggio():
     return inchiostro, interno, box
 
 
-def componi(inchiostro, interno, box, sfondo, G=1024, margine=0.12):
+def componi(inchiostro, interno, box, sfondo, G=1024, margine=0.12, viso=CARTA):
     x0, y0, x1, y1 = box
     lato = max(x1 - x0, y1 - y0)
     cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
@@ -100,7 +101,7 @@ def componi(inchiostro, interno, box, sfondo, G=1024, margine=0.12):
 
     tela = Image.new("RGB", (G, G), sfondo)
     off = ((G - dim) // 2, (G - dim) // 2 + int(G * 0.02))
-    tela.paste(CARTA, off, mappa(interno))
+    tela.paste(viso, off, mappa(interno))
     tela.paste(INCHIOSTRO, off, mappa(inchiostro))
     return tela
 
@@ -115,6 +116,7 @@ if __name__ == "__main__":
     ink, dentro, box = personaggio()
     salva(componi(ink, dentro, box, GIALLO), "copertina_giallo")
     salva(componi(ink, dentro, box, CARTA), "copertina_carta")
+    salva(componi(ink, dentro, box, (255, 255, 255), viso=(255, 255, 255)), "copertina_bianco")
     im = componi(ink, dentro, box, GIALLO, margine=0.16)
     m = Image.new("L", im.size, 0)
     ImageDraw.Draw(m).text((im.width * 0.8, im.height * 0.2), "?", font=font(260), fill=255, anchor="mm")
