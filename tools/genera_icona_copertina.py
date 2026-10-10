@@ -18,6 +18,7 @@ from PIL import Image, ImageDraw, ImageFilter
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from prepara_asset import font, pennello  # noqa: E402
+from genera_baffi_nuovi import disegna_nome  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "originali" / "copertina" / "copertina_i_baffi.png"
@@ -106,6 +107,22 @@ def componi(inchiostro, interno, box, sfondo, G=1024, margine=0.12, viso=CARTA, 
     return tela
 
 
+def riga(testo, seed):
+    """Scritta a pennello su una riga sola (disegna_nome andrebbe a capo con i testi lunghi)."""
+    pezzi = []
+    for k, parola in enumerate(testo.split()):
+        a = disegna_nome(parola, seed + k, passo=150).getchannel("A")
+        pezzi.append(a.crop(a.getbbox()))
+    h = max(p.height for p in pezzi)
+    spazio = h // 2
+    out = Image.new("L", (sum(p.width for p in pezzi) + spazio * (len(pezzi) - 1), h), 0)
+    x = 0
+    for p in pezzi:
+        out.paste(p, (x, h - p.height))
+        x += p.width + spazio
+    return out
+
+
 def salva(im, nome):
     im.save(OUT / f"{nome}_1024.png", optimize=True)
     im.resize((162, 162), Image.LANCZOS).save(OUT / f"{nome}_162.png", optimize=True)
@@ -125,4 +142,16 @@ if __name__ == "__main__":
         ImageDraw.Draw(m).text((im.width * 0.8, im.height * 0.2), "?", font=font(240), fill=255, anchor="mm")
         im.paste(INCHIOSTRO, mask=pennello(m, ampiezza=6, seed=3))
         salva(im, nome)
+    # bianca con "?" e la scritta del ritornello sotto
+    im = componi(ink, dentro, box, (255, 255, 255), margine=0.25, viso=(255, 255, 255), dx=-0.05)
+    im = im.transform(im.size, Image.AFFINE, (1, 0, 0, 0, 1, 150), fillcolor=(255, 255, 255))   # personaggio più in alto
+    m = Image.new("L", im.size, 0)
+    ImageDraw.Draw(m).text((im.width * 0.8, im.height * 0.14), "?", font=font(220), fill=255, anchor="mm")
+    im.paste(INCHIOSTRO, mask=pennello(m, ampiezza=6, seed=3))
+    for testo, y in (("HO FATTO CRESCERE", 0.74), ("I BAFFI", 0.87)):
+        t = riga(testo, 40 + len(testo))
+        s_ = min(im.width * 0.86 / t.width, im.height * 0.11 / t.height)
+        t = t.resize((int(t.width * s_), int(t.height * s_)), Image.LANCZOS)
+        im.paste(INCHIOSTRO, (int((im.width - t.width) / 2), int(im.height * y - t.height / 2)), t)
+    salva(im, "copertina_bianco_scritta")
     print("icone ok")
