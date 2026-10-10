@@ -189,7 +189,7 @@ def font(size):
     return ImageFont.load_default()
 
 
-def disegna_nome(testo, seed):
+def disegna_nome(testo, seed, passo=190):
     """Lettere maiuscole storte e irregolari, come scritte a pennello."""
     rng = random.Random(seed)
     righe = [testo]
@@ -197,7 +197,7 @@ def disegna_nome(testo, seed):
         parole = testo.split()
         meta = max(range(1, len(parole)), key=lambda k: -abs(len(" ".join(parole[:k])) - len(testo) / 2))
         righe = [" ".join(parole[:meta]), " ".join(parole[meta:])]
-    S, passo = 220, 190
+    S = 220
     W = max(len(r) for r in righe) * passo + 200
     H = len(righe) * 260 + 120
     m = Image.new("L", (W, H), 0)
