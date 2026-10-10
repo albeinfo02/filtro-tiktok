@@ -33,7 +33,7 @@ SCELTI = [
     "18_da_pizzaiolo", "19_da_zio_al_matrimonio",
 ]
 COLORI = {
-    "scuro": ((12, 9, 7), (78, 58, 44)),
+    "scuro": ((22, 15, 10), (88, 62, 42)),
     "castano": ((52, 34, 20), (140, 100, 64)),
 }
 FASI = [0.25, 0.5, 0.75, 1.0]   # lunghezza dei peli in ogni fase di crescita
@@ -67,6 +67,22 @@ def campo_direzioni(m):
     return dx / n, dy / n
 
 
+def profondita(m):
+    """0.5 sul bordo alto della sagoma (sotto il naso) fino a 1 sul bordo basso (sul labbro), colonna per colonna."""
+    h, w = m.shape
+    yy = np.arange(h)[:, None].astype(np.float32)
+    ha = m.any(axis=0)
+    top = np.where(ha, m.argmax(axis=0), 0).astype(np.float32)
+    bot = np.where(ha, h - 1 - m[::-1].argmax(axis=0), 1).astype(np.float32)
+    spess = np.maximum(bot - top, 1)
+    t = np.clip((yy - top) / spess, 0, 1)
+    f = 0.5 + 0.5 * (t * t * (3 - 2 * t))
+    # sfuma anche fuori dalla sagoma (punte dei peli)
+    f = np.where(yy > bot, 1.0, f)
+    return np.array(Image.fromarray((f * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(SS * 3)),
+                    dtype=np.float32) / 255
+
+
 def disegna(id_, colore, fase, seed):
     rng = np.random.default_rng(seed)
     m = sagoma(id_)
@@ -88,7 +104,7 @@ def disegna(id_, colore, fase, seed):
         x, y = float(xs[k]), float(ys[k])
         L = lungo * rng.uniform(0.6, 1.3)
         curva = rng.normal(0, 0.06)
-        ang = math.atan2(dy[int(y), int(x)], dx[int(y), int(x)]) + rng.normal(0, 0.10)
+        ang = math.atan2(dy[int(y), int(x)], dx[int(y), int(x)]) + rng.normal(0, 0.07)
         pts = [(x, y)]
         for _ in range(4):
             x += math.cos(ang) * L / 4
@@ -97,7 +113,7 @@ def disegna(id_, colore, fase, seed):
             pts.append((x, y))
         t = rng.random() ** 3   # quasi tutti scuri, qualche pelo più chiaro
         c = tuple(int(v) for v in scuro * (1 - t) + chiaro * t)
-        a = int(rng.uniform(150, 235))
+        a = int(rng.uniform(140, 225))
         w = int(SS * rng.uniform(0.35, 0.6)) or 1
         # radice più spessa, punta più sottile
         da.line(pts[:3], fill=a, width=w + 1)
@@ -106,9 +122,12 @@ def disegna(id_, colore, fase, seed):
 
     # velo sotto i peli: densità alla radice, la pelle si intravede
     velo = Image.fromarray((m * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(SS * 4))
-    velo = velo.point(lambda v: int(v * (0.40 + 0.35 * fase) * (0.5 if peluria else 1)))
+    velo = velo.point(lambda v: int(v * (0.55 + 0.35 * fase) * (0.5 if peluria else 1)))
     alfa = Image.fromarray(np.maximum(np.array(alfa), np.array(velo)))
 
+    a = np.array(alfa, dtype=np.float32) / 255
+    # più pieno nei toni medi (i peli sottili ridotti a 512 diventerebbero troppo trasparenti)
+    alfa = Image.fromarray((255 * (a ** 0.7) * profondita(m)).astype(np.uint8))
     im = col.convert("RGBA")
     im.putalpha(alfa)
     return im.resize((LATO, LATO), Image.LANCZOS)
