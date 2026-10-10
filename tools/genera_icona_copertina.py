@@ -88,7 +88,7 @@ def personaggio():
     return inchiostro, interno, box
 
 
-def componi(inchiostro, interno, box, sfondo, G=1024, margine=0.12, viso=CARTA):
+def componi(inchiostro, interno, box, sfondo, G=1024, margine=0.12, viso=CARTA, dx=0.0):
     x0, y0, x1, y1 = box
     lato = max(x1 - x0, y1 - y0)
     cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
@@ -100,7 +100,7 @@ def componi(inchiostro, interno, box, sfondo, G=1024, margine=0.12, viso=CARTA):
         return img.resize((dim, dim), Image.LANCZOS)
 
     tela = Image.new("RGB", (G, G), sfondo)
-    off = ((G - dim) // 2, (G - dim) // 2 + int(G * 0.02))
+    off = ((G - dim) // 2 + int(G * dx), (G - dim) // 2 + int(G * 0.03))
     tela.paste(viso, off, mappa(interno))
     tela.paste(INCHIOSTRO, off, mappa(inchiostro))
     return tela
@@ -117,9 +117,12 @@ if __name__ == "__main__":
     salva(componi(ink, dentro, box, GIALLO), "copertina_giallo")
     salva(componi(ink, dentro, box, CARTA), "copertina_carta")
     salva(componi(ink, dentro, box, (255, 255, 255), viso=(255, 255, 255)), "copertina_bianco")
-    im = componi(ink, dentro, box, GIALLO, margine=0.16)
-    m = Image.new("L", im.size, 0)
-    ImageDraw.Draw(m).text((im.width * 0.8, im.height * 0.2), "?", font=font(260), fill=255, anchor="mm")
-    im.paste(INCHIOSTRO, mask=pennello(m, ampiezza=6, seed=3))
-    salva(im, "copertina_domanda")
+    for nome, sfondo, viso in (("copertina_domanda", GIALLO, CARTA),
+                               ("copertina_bianco_domanda", (255, 255, 255), (255, 255, 255))):
+        # personaggio un po' più piccolo e spostato a sinistra, "?" in alto a destra senza toccare i capelli
+        im = componi(ink, dentro, box, sfondo, margine=0.17, viso=viso, dx=-0.05)
+        m = Image.new("L", im.size, 0)
+        ImageDraw.Draw(m).text((im.width * 0.8, im.height * 0.2), "?", font=font(240), fill=255, anchor="mm")
+        im.paste(INCHIOSTRO, mask=pennello(m, ampiezza=6, seed=3))
+        salva(im, nome)
     print("icone ok")
